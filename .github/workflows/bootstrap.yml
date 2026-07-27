@@ -1,0 +1,32 @@
+name: bootstrap-glowbeat
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct source archive
+        shell: bash
+        run: |
+          cat .bootstrap2/chunk-*.b64 | base64 -d > /tmp/glowbeat.tar.bz2
+          echo "4729e250904747c04b65a786e5c856d1077e6460f0e753cb89a6b37c947161ee  /tmp/glowbeat.tar.bz2" | sha256sum -c -
+          tar -xjf /tmp/glowbeat.tar.bz2 -C .
+          rm -rf .bootstrap .bootstrap2
+          rm -f .github/workflows/bootstrap.yml
+      - name: Commit complete source tree
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish full GlowBeat source tree"
+          git push origin HEAD:main
